@@ -274,4 +274,43 @@ public class querydslBasicTest {
                 .containsExactly("teamA", "teamB");
     }
 
+    /**
+     * ex). 회원과 팀을 조인하면서 팀이름이 teamA인 탐만 조인, 회원은 모두 조회
+     */
+    @Test
+    public void join_on(){
+
+        List<Tuple> result = queryFactory
+                .select(member, team)
+                .from(member)
+                .join(member.team, team).on(team.name.eq("teamA"))
+                .fetch();
+
+        result.forEach(m -> System.out.println(m.toString()));
+
+    }
+
+
+    /**
+     * 연관관계가 없는 엔티티 외부 조인
+     * 회원의 이름이 팀 이름과 같은 대상 외부 조인
+     */
+    @Test
+    public void join_on_no_relation(){
+
+        em.persist(new Member("teamA"));
+        em.persist(new Member("teamB"));
+        em.persist(new Member("teamC"));
+
+        //모든 회원과 모든 팀을 다 가져와서 조인을 해버리고 조건절에 조건으로 필터링
+        List<Tuple> result = queryFactory
+                .select(member, team)
+                .from(member)
+                //원래는 member.team으로 id를 조인하지만 이렇게 하면 id를 무시하고 name과 username이 같은 경우만 조회
+                .leftJoin(team).on(member.username.eq(team.name))
+                .fetch();
+
+        result.forEach(m -> System.out.println(m.toString()));
+    }
+
 }
