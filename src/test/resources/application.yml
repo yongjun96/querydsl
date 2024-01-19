@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: local #  profiles.active: local에서만 profiles를 적용한다.
+    active: test #  profiles.active: test에서만 profiles를 적용한다.
   datasource:
     url: jdbc:h2:tcp://localhost/~/queryDSL
     username: sa

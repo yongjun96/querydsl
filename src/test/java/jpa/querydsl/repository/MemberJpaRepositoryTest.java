@@ -1,8 +1,13 @@
 package jpa.querydsl.repository;
 
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
+import jpa.querydsl.Dto.MemberSearchCondition;
+import jpa.querydsl.Dto.MemberTeamDto;
 import jpa.querydsl.Entity.Member;
+import jpa.querydsl.Entity.Team;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,6 +43,37 @@ class MemberJpaRepositoryTest {
         List<Member> findMemberUsername = memberJpaRepository.findByUsernameQuerydsl("member1");
 
         assertThat(findMemberUsername).containsExactly(member);
+    }
+
+    @Test
+    public void searchTest(){
+
+        Team teamA = new Team("teamA");
+        Team teamB = new Team("teamB");
+        em.persist(teamA);
+        em.persist(teamB);
+
+        Member member1 = new Member("user1", 10, teamA);
+        Member member2 = new Member("user2", 20, teamA);
+
+        Member member3 = new Member("user3", 30, teamB);
+        Member member4 = new Member("user4", 40, teamB);
+        em.persist(member1);
+        em.persist(member2);
+        em.persist(member3);
+        em.persist(member4);
+
+        MemberSearchCondition condition = new MemberSearchCondition();
+        //condition.setAgeGoe(35);
+        //condition.setAgeLoe(40);
+        condition.setTeamName("teamB");
+
+        List<MemberTeamDto> resultBuilder = memberJpaRepository.searchByBuilder(condition);
+        List<MemberTeamDto> resultWhere = memberJpaRepository.search(condition);
+
+        assertThat(resultBuilder).extracting("username").containsExactly("user3", "user4");
+        assertThat(resultWhere).extracting("username").containsExactly("user3", "user4");
+
     }
 
 

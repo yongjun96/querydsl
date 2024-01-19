@@ -1,6 +1,7 @@
 package jpa.querydsl.repository;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -19,6 +20,7 @@ import java.util.Optional;
 
 import static jpa.querydsl.Entity.QMember.*;
 import static jpa.querydsl.Entity.QTeam.team;
+import static org.springframework.util.StringUtils.hasText;
 
 @Repository
 @RequiredArgsConstructor
@@ -59,20 +61,46 @@ public class MemberJpaRepository {
 
         BooleanBuilder builder = new BooleanBuilder();
 
-        if(StringUtils.hasText(condition.getUsername())){
-
+        if(hasText(condition.getUsername())){
+            builder.and(member.username.eq(condition.getUsername()));
+        }
+        if(hasText(condition.getTeamName())){
+            builder.and(team.name.eq(condition.getTeamName()));
+        }
+        if(condition.getAgeLoe() != null){
+            builder.and(member.age.loe(condition.getAgeLoe()));
+        }
+        if(condition.getAgeGoe() != null){
+            builder.and(member.age.goe(condition.getAgeGoe()));
         }
 
         return queryFactory
                 .select(new QMemberTeamDto(
-                        member.id.as("memberID"),
+                        member.id.as("memberId"),
                         member.username,
                         member.age,
                         team.id.as("teamId"),
-                        team.name.as("teamName")))
+                        team.name.as("teamName"))
+                )
                 .from(member)
-                .join(member.team, team).fetchJoin()
-                .where(UsernameEq(condition.getUsername()),
+                .join(member.team, team)
+                .where(builder)
+                .fetch();
+    }
+
+    public List<MemberTeamDto> search(MemberSearchCondition condition){
+        return queryFactory
+                .select(new QMemberTeamDto(
+                        member.id.as("memberId"),
+                        member.username,
+                        member.age,
+                        team.id.as("teamId"),
+                        team.name.as("teamName"))
+                )
+                .from(member)
+                .join(member.team, team)
+                .where(userNameEq(
+                        condition.getUsername()),
                         teamNameEq(condition.getTeamName()),
                         ageGoe(condition.getAgeGoe()),
                         ageLoe(condition.getAgeLoe())
@@ -80,36 +108,24 @@ public class MemberJpaRepository {
                 .fetch();
     }
 
-    public BooleanExpression UsernameEq(String username){
-        if(username == null){
-            return null;
-        }else {
-            return member.username.eq(username);
-        }
+    private BooleanExpression userNameEq(String username) {
+        return hasText(username) ? member.username.eq(username) : null;
     }
 
-    public BooleanExpression teamNameEq(String teamName){
-        if(teamName == null){
-            return null;
-        }else {
-            return member.team.name.eq(teamName);
-        }
+    private BooleanExpression teamNameEq(String teamName) {
+        return hasText(teamName) ? team.name.eq(teamName) : null;
     }
 
-    public BooleanExpression ageGoe(Integer ageGoe){
-        if(ageGoe == null){
-            return null;
-        }else {
-            return member.age.goe(ageGoe);
-        }
+    private BooleanExpression ageGoe(Integer ageGoe) {
+        return ageGoe != null ? member.age.goe(ageGoe) : null;
     }
 
-    public BooleanExpression ageLoe(Integer ageLoe){
-        if(ageLoe == null){
-            return null;
-        }else {
-            return member.age.loe(ageLoe);
-        }
+    private BooleanExpression ageLoe(Integer ageLoe) {
+        return ageLoe != null ? member.age.loe(ageLoe) : null;
     }
+
+
+
+
 
 }
