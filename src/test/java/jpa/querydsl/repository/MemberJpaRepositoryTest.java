@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,11 +30,16 @@ class MemberJpaRepositoryTest {
         Optional<Member> findMember = memberJpaRepository.findById(member.getId());
 
         assertThat(findMember.get().getUsername()).isEqualTo("member1");
-        assertThat(member).isEqualTo(findMember);
+        assertThat(member).isEqualTo(findMember.get());
 
-        List<Member> findMembers = memberJpaRepository.findAll();
+        List<Member> findMembers = memberJpaRepository.findAllQuerydsl();
+        assertThat(findMembers).containsExactly(member);
 
+        List<Member> findMemberUsername = memberJpaRepository.findByUsernameQuerydsl("member1");
 
+        assertThat(findMemberUsername).containsExactly(member);
     }
+
+
 
 }
